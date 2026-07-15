@@ -1,12 +1,10 @@
-import { AnalysisReport } from '../interfaces/analysis-report.interface';
-
 // Fixture usada enquanto os engines reais (linters, SAST, scanners)
 // ainda não estão implementados. Serve apenas para validar integração.
 export function buildMockAnalysisReport(
   projectId: string,
   branch: string,
   commit: string,
-): AnalysisReport {
+): any {
   return {
     projectId,
     branch,

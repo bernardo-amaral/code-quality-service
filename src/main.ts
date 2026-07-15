@@ -2,8 +2,25 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConsoleLogger, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { version } from '../package.json';
+import { printStartupBanner } from './common/startup-banner';
 
 async function bootstrap() {
+  const nodeEnv = process.env.NODE_ENV ?? 'development';
+  const port = process.env.PORT ?? 3000;
+
+  const isDev = ['development', 'develop'].includes(nodeEnv);
+
+  console.clear();
+
+  printStartupBanner({
+    appName: 'Batmanuel',
+    version,
+    environment: nodeEnv,
+    port,
+    swaggerUrl: isDev ? `http://localhost:${port}/docs` : undefined,
+  });
+
   const app = await NestFactory.create(AppModule, {
     logger: new ConsoleLogger({
       prefix: 'BATMANUEL',
@@ -13,9 +30,7 @@ async function bootstrap() {
 
   app.enableCors();
 
-  const nodeEnv = process.env.NODE_ENV ?? 'development';
-
-  if (['development', 'develop'].includes(nodeEnv)) {
+  if (isDev) {
     const config = new DocumentBuilder()
       .setTitle('Batmanuel API')
       .setDescription(
@@ -46,8 +61,8 @@ async function bootstrap() {
   }
 
   await app.startAllMicroservices();
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(port);
 
-  Logger.verbose(`Application running on port ${process.env.PORT ?? 3000}`);
+  Logger.verbose(`Application running on port ${port}`);
 }
 void bootstrap();

@@ -7,10 +7,14 @@ import { AnalyzeRequestDto } from './dto/analyze-request.dto';
 import { AnalysisReport } from './interfaces/analysis-report.interface';
 import { Issue } from './interfaces/issue.interface';
 import { DuplicationService } from '../engines/duplication.service';
+import { RulesService } from 'src/rules/rules.service';
 
 @Injectable()
 export class AnalyzeService {
-  constructor(private readonly duplicationService: DuplicationService) {}
+  constructor(
+    private readonly duplicationService: DuplicationService,
+    private readonly rulesService: RulesService,
+  ) {}
 
   /**
    *
@@ -20,7 +24,7 @@ export class AnalyzeService {
   async analyze(dto: AnalyzeRequestDto): Promise<AnalysisReport> {
     const branch = dto.branch ?? 'main';
     const commit = dto.commit ?? 'unknown-commit';
-    const sourcePath = dto.sourcePath ?? '.';
+    const sourcePath = dto.sourcePath;
 
     const duplicationResult =
       await this.duplicationService.analyzeDirectory(sourcePath);
@@ -39,7 +43,7 @@ export class AnalyzeService {
 
     const issues: Issue[] = [...duplicationIssues];
 
-    const score = this.calculateScore(
+    const evaluation = this.rulesService.evaluate(
       duplicationResult.duplicationPercentage,
       issues,
     );
@@ -49,11 +53,13 @@ export class AnalyzeService {
       branch,
       commit,
       timestamp: new Date().toISOString(),
-      score,
+      score: evaluation.score,
+      passed: evaluation.passed,
+      threshold: evaluation.threshold,
       metrics: {
-        securityCritical: 0,
-        securityHigh: 0,
-        securityMedium: 0,
+        securityCritical: evaluation.breakdown.issuesBySeverity.critical ?? 0,
+        securityHigh: evaluation.breakdown.issuesBySeverity.high ?? 0,
+        securityMedium: evaluation.breakdown.issuesBySeverity.medium ?? 0,
         qualitySmells: 0,
         duplications: duplicationResult.duplicates.length,
         outdatedDeps: 0,
@@ -74,29 +80,5 @@ export class AnalyzeService {
       trend: [],
       lastAnalysisAt: new Date().toISOString(),
     };
-  }
-
-  /**
-   *
-   * @param duplicationPercentage
-   * @param issues
-   * @returns
-   */
-  private calculateScore(
-    duplicationPercentage: number,
-    issues: Issue[],
-  ): number {
-    let score = 100;
-
-    score -= duplicationPercentage * 2;
-
-    for (const issue of issues) {
-      if (issue.severity === 'critical') score -= 15;
-      else if (issue.severity === 'high') score -= 8;
-      else if (issue.severity === 'medium') score -= 3;
-      else if (issue.severity === 'low') score -= 1;
-    }
-
-    return Math.max(0, Math.round(score));
   }
 }

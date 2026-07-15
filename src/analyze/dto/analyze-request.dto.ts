@@ -27,7 +27,6 @@ export class AnalyzeRequestDto {
     example: './repo/src',
     description: 'Path to the source directory to analyze',
   })
-  @IsOptional()
   @IsString()
-  sourcePath?: string;
+  sourcePath: string;
 }

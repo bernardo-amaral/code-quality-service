@@ -147,6 +147,8 @@ Receives project/branch/commit information, runs the analysis engines, and retur
   "commit": "abc123",
   "timestamp": "2026-07-15T15:00:00.000Z",
   "score": 82,
+  "passed": true,
+  "threshold": 70,
   "metrics": {
     "securityCritical": 1,
     "securityHigh": 2,
@@ -169,15 +171,17 @@ Receives project/branch/commit information, runs the analysis engines, and retur
 }
 ```
 
-| Field                                | Type   | Description                                    |
-| ------------------------------------ | ------ | ---------------------------------------------- |
-| score                                | number | Overall quality/security score (0-100)         |
-| metrics.securityCritical/High/Medium | number | Count of security issues by severity           |
-| metrics.qualitySmells                | number | Count of code smells detected                  |
-| metrics.duplications                 | number | Count of duplicated code blocks                |
-| metrics.outdatedDeps                 | number | Count of outdated/vulnerable dependencies      |
-| issues[].type                        | string | `security`, `quality`, or `dependency`         |
-| issues[].severity                    | string | `critical`, `high`, `medium`, `low`, or `info` |
+| Field                                | Type    | Description                                         |
+| ------------------------------------ | ------- | --------------------------------------------------- |
+| score                                | number  | Overall quality/security score (0-100)              |
+| passed                               | boolean | Whether the score meets the configured quality gate |
+| threshold                            | number  | Minimum score required to pass the quality gate     |
+| metrics.securityCritical/High/Medium | number  | Count of security issues by severity                |
+| metrics.qualitySmells                | number  | Count of code smells detected                       |
+| metrics.duplications                 | number  | Count of duplicated code blocks                     |
+| metrics.outdatedDeps                 | number  | Count of outdated/vulnerable dependencies           |
+| issues[].type                        | string  | `security`, `quality`, or `dependency`              |
+| issues[].severity                    | string  | `critical`, `high`, `medium`, `low`, or `info`      |
 
 ---
 
@@ -250,18 +254,39 @@ PORT=3000
 
 ## GitHub Actions Integration
 
-A sample workflow is provided at `.github/workflows/code-quality.yml`. It:
+A workflow is provided at `.github/workflows/code-quality.yml`. It:
 
 1. Checks out the repository.
-2. Builds a report payload with project, branch, and commit information.
+2. Builds a report payload with project, branch, commit, and source path information.
 3. Sends the payload to `POST /analyze`, authenticating with a Bearer token.
-4. Reads the returned `score` and fails the pipeline if it falls below a defined threshold.
+4. Reads the `passed` and `threshold` fields from the response and fails the pipeline if the quality gate is not met.
 
 **Required repository secrets:**
 
 | Secret              | Description                                |
 | ------------------- | ------------------------------------------ |
 | `QUALITY_API_URL`   | Public URL of the Batmanuel API            |
+| `QUALITY_API_TOKEN` | Bearer token used to authenticate requests |
+
+**Example step:**
+
+```yaml
+- name: Check quality gate (passed/threshold)
+  run: |
+    PASSED=$(node -e "console.log(require('./response.json').passed)")
+    SCORE=$(node -e "console.log(require('./response.json').score)")
+    THRESHOLD=$(node -e "console.log(require('./response.json').threshold)")
+
+    echo "Score: $SCORE (threshold: $THRESHOLD)"
+
+    if [ "$PASSED" != "true" ]; then
+      echo "Quality gate failed: score $SCORE is below threshold $THRESHOLD."
+      exit 1
+    fi
+```
+
+---|---|
+| `QUALITY_API_URL` | Public URL of the Batmanuel API |
 | `QUALITY_API_TOKEN` | Bearer token used to authenticate requests |
 
 **Example step:**

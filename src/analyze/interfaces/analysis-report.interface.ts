@@ -7,6 +7,8 @@ export interface AnalysisReport {
   commit: string;
   timestamp: string;
   score: number;
+  passed: boolean;
+  threshold: number;
   metrics: AnalysisMetrics;
   issues: Issue[];
 }
