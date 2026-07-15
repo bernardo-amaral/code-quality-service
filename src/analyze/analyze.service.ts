@@ -138,7 +138,7 @@ export class AnalyzeService {
       (block) => ({
         engine: 'duplication-service',
         type: 'quality',
-        severity: block.lines >= 10 ? 'high' : 'medium',
+        severity: block.lines >= 15 ? 'high' : 'medium',
         ruleId: 'duplicate-code',
         message: `Duplicated block found between ${block.firstFile}:${block.firstFileStart} and ${block.secondFile}:${block.secondFileStart}`,
         file: block.secondFile,
