@@ -4,7 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AnalyzeRequestDto {
   @ApiProperty({
-    example: 'my-project-backend',
+    example: 'sindigo-backend',
     description: 'Unique project identifier',
   })
   @IsString()
@@ -22,4 +22,12 @@ export class AnalyzeRequestDto {
   @IsOptional()
   @IsString()
   commit?: string;
+
+  @ApiPropertyOptional({
+    example: './repo/src',
+    description: 'Path to the source directory to analyze',
+  })
+  @IsOptional()
+  @IsString()
+  sourcePath?: string;
 }
