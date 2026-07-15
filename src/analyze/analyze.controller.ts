@@ -44,7 +44,7 @@ export class AnalyzeController {
     return this.analyzeService.analyze(dto);
   }
 
-  @Post('upload')
+  @Post('analyze/upload')
   @UseGuards(TokenGuard)
   @UseInterceptors(
     FileInterceptor('file', {
