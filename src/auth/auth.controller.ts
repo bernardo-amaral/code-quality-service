@@ -11,7 +11,7 @@ export class AuthController {
     description: 'Mock token generated successfully',
     schema: {
       example: {
-        projectId: 'project-backend',
+        projectId: 'my-project-backend',
         token: 'MOCK-TOKEN-1234567890',
         expiresIn: '30d',
       },

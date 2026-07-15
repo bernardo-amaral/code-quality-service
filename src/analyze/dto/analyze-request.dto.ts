@@ -4,7 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AnalyzeRequestDto {
   @ApiProperty({
-    example: 'project-backend',
+    example: 'my-project-backend',
     description: 'Unique project identifier',
   })
   @IsString()

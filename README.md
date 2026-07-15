@@ -93,7 +93,7 @@ The API will be available at `http://localhost:3000`.
 curl -X POST http://localhost:3000/analyze \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <YOUR_TOKEN>" \
-  -d '{"projectId":"sindigo-backend","branch":"main","commit":"abc123"}'
+  -d '{"projectId":"my-project-backend","branch":"main","commit":"abc123"}'
 ```
 
 ---
@@ -108,7 +108,7 @@ Generates an access token for a given project. This token must be used to authen
 
 ```json
 {
-  "projectId": "sindigo-backend"
+  "projectId": "my-project-backend"
 }
 ```
 
@@ -116,7 +116,7 @@ Generates an access token for a given project. This token must be used to authen
 
 ```json
 {
-  "projectId": "sindigo-backend",
+  "projectId": "my-project-backend",
   "token": "<GENERATED_TOKEN>",
   "expiresIn": "30d"
 }
@@ -132,7 +132,7 @@ Receives project/branch/commit information, runs the analysis engines, and retur
 
 ```json
 {
-  "projectId": "sindigo-backend",
+  "projectId": "my-project-backend",
   "branch": "main",
   "commit": "abc123"
 }
@@ -142,7 +142,7 @@ Receives project/branch/commit information, runs the analysis engines, and retur
 
 ```json
 {
-  "projectId": "sindigo-backend",
+  "projectId": "my-project-backend",
   "branch": "main",
   "commit": "abc123",
   "timestamp": "2026-07-15T15:00:00.000Z",
@@ -189,7 +189,7 @@ Returns a historical summary for a given project, including score trend across r
 
 ```json
 {
-  "projectId": "sindigo-backend",
+  "projectId": "my-project-backend",
   "lastScore": 82,
   "trend": [76, 78, 80, 82],
   "lastAnalysisAt": "2026-07-15T15:00:00.000Z"

@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class GenerateTokenDto {
   @ApiProperty({
-    example: 'project-backend',
+    example: 'my-project-backend',
     description: 'Unique project identifier',
   })
   @IsString()
