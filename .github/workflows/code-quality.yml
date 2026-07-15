@@ -24,18 +24,35 @@ jobs:
 
       - name: Send source archive to Batmanuel
         run: |
-          curl -s -X POST "$QUALITY_API_URL/analyze/upload" \
+          HTTP_STATUS=$(curl -sS -X POST "$QUALITY_API_URL/analyze/upload" \
             -H "Authorization: Bearer $QUALITY_API_TOKEN" \
             -F "projectId=batmanuel" \
             -F "branch=$GITHUB_REF_NAME" \
             -F "commit=$GITHUB_SHA" \
             -F "file=@source-code.zip" \
-            -o response.json
+            -o response.json \
+            -w "%{http_code}")
 
+          echo "HTTP status: $HTTP_STATUS"
+          echo "Response body:"
           cat response.json
+
+          if [ "$HTTP_STATUS" != "200" ] && [ "$HTTP_STATUS" != "201" ]; then
+            echo "Batmanuel API returned unexpected HTTP status: $HTTP_STATUS"
+            exit 1
+          fi
         env:
           QUALITY_API_URL: ${{ secrets.QUALITY_API_URL }}
           QUALITY_API_TOKEN: ${{ secrets.QUALITY_API_TOKEN }}
+
+      - name: Validate response schema
+        run: |
+          if ! jq -e '.passed != null and .score != null and .threshold != null' response.json > /dev/null; then
+            echo "Response JSON does not contain passed/score/threshold."
+            echo "Actual response:"
+            cat response.json
+            exit 1
+          fi
 
       - name: Check quality gate
         run: |
