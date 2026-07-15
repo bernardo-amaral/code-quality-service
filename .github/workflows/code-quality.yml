@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  quality:
+  batmanuel:
     runs-on: ubuntu-latest
 
     steps:
@@ -39,9 +39,9 @@ jobs:
 
       - name: Check quality gate
         run: |
-          PASSED=$(node -e "console.log(require('./response.json').passed)")
-          SCORE=$(node -e "console.log(require('./response.json').score)")
-          THRESHOLD=$(node -e "console.log(require('./response.json').threshold)")
+          PASSED=$(jq -r '.passed' response.json)
+          SCORE=$(jq -r '.score' response.json)
+          THRESHOLD=$(jq -r '.threshold' response.json)
 
           echo "Score: $SCORE (threshold: $THRESHOLD)"
 
