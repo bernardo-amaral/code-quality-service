@@ -24,8 +24,8 @@ jobs:
 
       - name: Send source archive to Batmanuel
         run: |
-          HTTP_STATUS=$(curl -sS -X POST "https://batmanuel.onrender.com/analyze/upload" \
-            -H "Authorization: Bearer MOCK-TOKEN-1234567890" \
+          HTTP_STATUS=$(curl -sS -X POST "$QUALITY_API_URL/analyze/upload" \
+            -H "Authorization: Bearer $QUALITY_API_TOKEN" \
             -H "Content-Type: multipart/form-data" \
             -F "projectId=batmanuel" \
             -F "branch=$GITHUB_REF_NAME" \
