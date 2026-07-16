@@ -39,6 +39,11 @@ export class DuplicationService {
     return await this.detectDuplicates(files);
   }
 
+  /**
+   *
+   * @param files
+   * @returns
+   */
   detectDuplicates(files: NormalizedFile[]): DuplicationResult {
     const blockIndex = new Map<string, BlockOccurrence[]>();
     const duplicates: DuplicationBlock[] = [];
@@ -126,6 +131,11 @@ export class DuplicationService {
     };
   }
 
+  /**
+   *
+   * @param filePath
+   * @returns
+   */
   private readAndNormalize(filePath: string): NormalizedFile {
     const content = fs.readFileSync(filePath, 'utf-8');
     const lines = content.split('\n').map((line) => this.normalizeLine(line));
@@ -133,6 +143,11 @@ export class DuplicationService {
     return { filePath, lines };
   }
 
+  /**
+   *
+   * @param line
+   * @returns
+   */
   private normalizeLine(line: string): string {
     const normalized = line
       .trim()
@@ -155,10 +170,20 @@ export class DuplicationService {
     return normalized;
   }
 
+  /**
+   *
+   * @param line
+   * @returns
+   */
   private isMeaningfulLine(line: string): boolean {
     return line.trim().length > 0;
   }
 
+  /**
+   *
+   * @param block
+   * @returns
+   */
   private hashBlock(block: string): string {
     let hash = 0;
 
@@ -170,6 +195,14 @@ export class DuplicationService {
     return hash.toString();
   }
 
+  /**
+   *
+   * @param fileA
+   * @param startA
+   * @param fileB
+   * @param startB
+   * @returns
+   */
   private buildPairKey(
     fileA: string,
     startA: number,
@@ -182,6 +215,11 @@ export class DuplicationService {
     return [left, right].sort().join('|');
   }
 
+  /**
+   *
+   * @param duplicates
+   * @returns
+   */
   private consolidateDuplicates(
     duplicates: DuplicationBlock[],
   ): DuplicationBlock[] {
@@ -224,6 +262,13 @@ export class DuplicationService {
     return Array.from(grouped.values());
   }
 
+  /**
+   *
+   * @param dir
+   * @param extensions
+   * @param ignorePatterns
+   * @returns
+   */
   private collectFiles(
     dir: string,
     extensions: string[],

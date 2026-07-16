@@ -2,13 +2,17 @@ import { RulesConfig } from '../interfaces/rules-config.interface';
 
 export const DEFAULT_RULES_CONFIG: RulesConfig = {
   baseScore: 100,
-  duplicationWeight: 2,
+  passThreshold: 80,
+  duplicationWeight: 0.5,
   severityWeights: {
-    critical: 15,
-    high: 8,
-    medium: 3,
-    low: 1,
+    critical: 20,
+    high: 10,
+    medium: 5,
+    low: 2,
     info: 0,
   },
-  passThreshold: 70,
+  typeMultipliers: {
+    dependency: 1.5,
+    quality: 1.0,
+  },
 };

@@ -1,5 +1,3 @@
-import { Issue } from '../../analyze/interfaces/issue.interface';
-
 export interface RulesEvaluation {
   score: number;
   passed: boolean;
@@ -8,5 +6,6 @@ export interface RulesEvaluation {
     duplicationPenalty: number;
     issuesPenalty: number;
     issuesBySeverity: Record<string, number>;
+    issuesByType: Record<string, number>;
   };
 }

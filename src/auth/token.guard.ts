@@ -8,8 +8,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
-// MOCK guard: only checks for a fixed Bearer token.
-// Will later validate real signed JWTs (expiration, projectId claim, revocation, etc).
 @Injectable()
 export class TokenGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {

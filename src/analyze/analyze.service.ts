@@ -18,11 +18,13 @@ import { mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import AdmZip from 'adm-zip';
+import { DependencyScannerService } from 'src/engines/dependency-scanner.service';
 
 @Injectable()
 export class AnalyzeService {
   constructor(
     private readonly duplicationService: DuplicationService,
+    private readonly dependencyScannerService: DependencyScannerService,
     private readonly rulesService: RulesService,
   ) {}
 
@@ -36,46 +38,12 @@ export class AnalyzeService {
     const commit = dto.commit ?? 'unknown-commit';
     const sourcePath = dto.sourcePath;
 
-    const duplicationResult =
-      await this.duplicationService.analyzeDirectory(sourcePath);
-
-    const duplicationIssues: Issue[] = duplicationResult.duplicates
-      .slice(0, 10)
-      .map((block) => ({
-        engine: 'duplication-service',
-        type: 'quality',
-        severity: block.lines >= 15 ? 'high' : 'medium',
-        ruleId: 'duplicate-code',
-        message: `Duplicated block found between ${block.firstFile}:${block.firstFileStart} and ${block.secondFile}:${block.secondFileStart}`,
-        file: block.secondFile,
-        line: block.secondFileStart,
-      }));
-
-    const issues: Issue[] = [...duplicationIssues];
-
-    const evaluation = this.rulesService.evaluate(
-      duplicationResult.duplicationPercentage,
-      issues,
-    );
-
-    return {
+    return this.runAnalysis({
       projectId: dto.projectId,
       branch,
       commit,
-      timestamp: new Date().toISOString(),
-      score: evaluation.score,
-      passed: evaluation.passed,
-      threshold: evaluation.threshold,
-      metrics: {
-        securityCritical: evaluation.breakdown.issuesBySeverity.critical ?? 0,
-        securityHigh: evaluation.breakdown.issuesBySeverity.high ?? 0,
-        securityMedium: evaluation.breakdown.issuesBySeverity.medium ?? 0,
-        qualitySmells: 0,
-        duplications: duplicationResult.duplicates.length,
-        outdatedDeps: 0,
-      },
-      issues,
-    };
+      sourcePath,
+    });
   }
 
   /**
@@ -146,7 +114,10 @@ export class AnalyzeService {
       }),
     );
 
-    const issues: Issue[] = [...duplicationIssues];
+    const dependencyIssues: Issue[] =
+      await this.dependencyScannerService.scanPackageJson(params.sourcePath);
+
+    const issues: Issue[] = [...duplicationIssues, ...dependencyIssues];
 
     const evaluation = this.rulesService.evaluate(
       duplicationResult.duplicationPercentage,
@@ -167,7 +138,7 @@ export class AnalyzeService {
         securityMedium: evaluation.breakdown.issuesBySeverity.medium ?? 0,
         qualitySmells: 0,
         duplications: duplicationResult.duplicates.length,
-        outdatedDeps: 0,
+        outdatedDeps: dependencyIssues.length,
       },
       issues,
     };

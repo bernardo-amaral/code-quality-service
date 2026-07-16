@@ -1,3 +1,5 @@
+import { IssueSeverity } from 'src/analyze/interfaces/issue.interface';
+
 export interface SeverityWeights {
   critical: number;
   high: number;
@@ -8,7 +10,11 @@ export interface SeverityWeights {
 
 export interface RulesConfig {
   baseScore: number;
-  duplicationWeight: number;
-  severityWeights: SeverityWeights;
   passThreshold: number;
+  duplicationWeight: number;
+  severityWeights: Record<IssueSeverity, number>;
+  typeMultipliers: {
+    dependency: number;
+    quality: number;
+  };
 }
