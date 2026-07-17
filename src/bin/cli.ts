@@ -7,7 +7,7 @@ import path from 'node:path';
 
 async function main() {
   const args = process.argv.slice(2);
-  const targetPath = args[0] ?? process.cwd();
+  const targetPath = args[1] ?? process.cwd();
 
   const projectId = path.basename(targetPath);
 
@@ -18,7 +18,7 @@ async function main() {
   const analyzeService = app.get(AnalyzeService);
 
   const result = await analyzeService.analyze({
-    sourcePath: targetPath,
+    sourcePath: targetPath || '.',
     projectId,
   });
 

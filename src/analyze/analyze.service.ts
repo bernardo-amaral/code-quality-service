@@ -32,7 +32,7 @@ export class AnalyzeService {
   async analyze(dto: AnalyzeRequestDto): Promise<AnalysisReport> {
     const branch = dto?.branch || undefined;
     const commit = dto?.commit || undefined;
-    const sourcePath = dto.sourcePath;
+    const sourcePath = dto?.sourcePath || '.';
 
     return this.runAnalysis({
       projectId: dto.projectId,
