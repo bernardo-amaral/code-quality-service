@@ -1,4 +1,4 @@
-// scripts/fix-dist-package-bin.cjs
+// scripts/fix-dist-package.cjs
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -14,12 +14,14 @@ pkg.bin = {
 };
 
 pkg.files = pkg.files || [];
-if (!pkg.files.includes('README.md')) {
-    pkg.files.push('README.md');
+for (const entry of ['src', 'assets', 'README.md']) {
+    if (!pkg.files.includes(entry)) {
+        pkg.files.push(entry);
+    }
 }
 
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
-console.log('Updated dist/package.json bin to ./src/bin/cli.js');
+console.log('Updated dist/package.json (bin and files)');
 
 if (fs.existsSync(readmeSrc)) {
     fs.copyFileSync(readmeSrc, readmeDst);

@@ -80,7 +80,7 @@ jobs:
         run: npm i
 
       - name: Build 🔧
-        run: npm run build
+        run: npm run build && node scripts/fix-dist-package.cjs
 
       - name: Publish package on NPM 📦
         working-directory: dist/
