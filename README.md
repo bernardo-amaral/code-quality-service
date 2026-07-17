@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <img alt="Build Status" src="https://github.com/bernardo-amaral/batmanuel/actions/workflows/code-quality.yml/badge.svg?branch=main" />
-  <img alt="Latest Release" src="https://img.shields.io/github/v/release/bernardo-amaral/batmanuel" />
+  <img alt="Build Status" src="https://github.com/SEU_USER/batmanuel/actions/workflows/code-quality.yml/badge.svg?branch=main" />
+  <img alt="Latest Release" src="https://img.shields.io/github/v/release/SEU_USER/batmanuel" />
 </p>
 
 # Batmanuel
@@ -18,9 +18,9 @@
 - [Architecture Overview](#architecture-overview)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
+- [CLI Usage](#cli-usage)
 - [API Routes](#api-routes)
   - [POST /auth/token](#post-authtoken)
-  - [POST /analyze](#post-analyze)
   - [POST /analyze/upload](#post-analyzeupload)
   - [GET /analyze/:projectId/summary](#get-analyzeprojectidsummary)
 - [Rules Engine](#rules-engine)
@@ -53,7 +53,7 @@ GitHub Actions / Client
    AnalysisReport + score + threshold + passed
 ```
 
-At this stage, the API supports direct analysis requests and uploaded repository archives, which allows CI pipelines to send a zipped version of the repository instead of relying on a server-side filesystem path.
+At this stage, the API supports uploaded repository archives via POST /analyze/upload, which allows CI pipelines to send a zipped version of the repository instead of relying on a server-side filesystem path. Local analysis of the current project is handled by the Batmanuel CLI, which runs the same analysis pipeline directly on the working directory.
 
 ---
 
@@ -96,7 +96,7 @@ src/
 
 - `auth/`: generates and validates Bearer tokens for protected endpoints.
 - `analyze/`: receives analysis requests, orchestrates engines, and returns normalized reports.
-- `engines/`: contains concrete analyzers such as `DuplicationService`.
+- `engines/`: contains concrete analyzers such as `DuplicationService` and `DependencyScannerService`.
 - `rules/`: contains the scoring and threshold logic, exposed through `RulesService` and configured through the exported `RULES_CONFIG` provider token.
 
 ---
@@ -122,20 +122,6 @@ npm run start:dev
 
 The API will be available at `http://localhost:3000`.
 
-### Testing `POST /analyze`
-
-```bash
-curl -X POST http://localhost:3000/analyze \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <YOUR_TOKEN>" \
-  -d '{
-    "projectId":"my-project-backend",
-    "branch":"main",
-    "commit":"abc123",
-    "sourcePath":"./src"
-  }'
-```
-
 ### Testing `POST /analyze/upload`
 
 ```bash
@@ -148,6 +134,57 @@ curl -X POST http://localhost:3000/analyze/upload \
 ```
 
 ---
+
+## CLI Usage
+
+Batmanuel can also be used as a local CLI tool to analyze the current project without exposing an HTTP endpoint.
+
+### Running the CLI in a project
+
+Inside the Batmanuel repository, you can run:
+
+```bash
+npx ts-node bin/cli.ts analyze .
+```
+
+This command:
+
+- creates a NestJS application context for `AnalyzeModule`;
+- runs the same analysis pipeline used by `POST /analyze/upload`;
+- prints the JSON `AnalysisReport` (score, threshold, passed, metrics, issues) to stdout.
+
+By default, the CLI uses:
+
+- `sourcePath`: the current working directory (or the path you pass as the first argument);
+- `projectId`: the basename of the target directory (e.g. `batmanuel` for `/Users/you/projects/batmanuel`).
+
+### Integrating Batmanuel as a dependency
+
+To use Batmanuel as a CLI in another project:
+
+1. Install Batmanuel as a dependency (once it is published to npm):
+
+   ```bash
+   npm install batmanuel --save-dev
+   ```
+
+2. Add an npm script to your project:
+
+   ```json
+   {
+     "scripts": {
+       "batmanuel:analyze": "batmanuel analyze ."
+     }
+   }
+   ```
+
+3. Run the analysis from the project root:
+
+   ```bash
+   npm run batmanuel:analyze
+   ```
+
+This makes it easy to integrate Batmanuel into local workflows and CI pipelines without running a separate API server.
 
 ## API Routes
 
