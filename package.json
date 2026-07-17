@@ -6,7 +6,7 @@
   "private": false,
   "license": "MIT",
   "bin": {
-    "batmanuel": "./bin/cli.js"
+    "batmanuel": "./dist/src/bin/cli.js"
   },
   "scripts": {
     "build": "nest build",

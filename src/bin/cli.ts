@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { NestFactory } from '@nestjs/core';
-import { AnalyzeModule } from '../src/analyze/analyze.module';
-import { AnalyzeService } from '../src/analyze/analyze.service';
+import { AnalyzeModule } from '../analyze/analyze.module';
+import { AnalyzeService } from '../analyze/analyze.service';
 import path from 'node:path';
 
 async function main() {
