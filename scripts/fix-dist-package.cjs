@@ -4,8 +4,19 @@ const path = require('node:path');
 
 const distDir = path.join(__dirname, '..', 'dist');
 const pkgPath = path.join(distDir, 'package.json');
+
 const readmeSrc = path.join(__dirname, '..', 'README.md');
 const readmeDst = path.join(distDir, 'README.md');
+
+const assetsSrc = path.join(__dirname, '..', 'assets');
+const assetsDst = path.join(distDir, 'assets');
+
+if (fs.existsSync(assetsSrc)) {
+    fs.cpSync(assetsSrc, assetsDst, { recursive: true });
+    console.log('Copied assets/ to dist/assets/');
+} else {
+    console.warn('assets/ directory not found in project root.');
+}
 
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 
