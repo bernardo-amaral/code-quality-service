@@ -22,7 +22,7 @@
 - [API Routes](#api-routes)
   - [POST /auth/token](#post-authtoken)
   - [POST /analyze/upload](#post-analyzeupload)
-  - [GET /analyze/:projectId/summary](#get-analyzeprojectidsummary)
+  - [GET /projects/:id/summary](#get-projectsidsummary)
 - [Rules Engine](#rules-engine)
 - [Authentication](#authentication)
 - [Swagger / API Documentation](#swagger--api-documentation)
@@ -47,13 +47,15 @@ GitHub Actions / Client
           +--> Analyze module
           |      |
           |      +--> DuplicationService
+          |      +--> DependencyScannerService
+          |      +--> SecurityService
           |      +--> RulesService
           |
           v
    AnalysisReport + score + threshold + passed
 ```
 
-At this stage, the API supports uploaded repository archives via POST /analyze/upload, which allows CI pipelines to send a zipped version of the repository instead of relying on a server-side filesystem path. Local analysis of the current project is handled by the Batmanuel CLI, which runs the same analysis pipeline directly on the working directory.
+At this stage, the API supports uploaded repository archives via POST /analyze/upload, which allows CI pipelines to send a zipped version of the repository instead of relying on a server-side filesystem path. Local analysis of the current project is handled by the Batmanuel CLI, which runs the same analysis pipeline directly on the working directory. The current implementation does not expose a POST /analyze endpoint; the upload route is the main HTTP entry point for analysis.
 
 ---
 
@@ -79,8 +81,11 @@ src/
 │       ├── analysis-report.interface.ts
 │       └── issue.interface.ts
 ├── engines/
+│   ├── dependency-scanner.service.ts
 │   ├── duplication.service.ts
+│   ├── security.service.ts
 │   └── interfaces/
+│       ├── dependency-result.interface.ts
 │       └── duplication-result.interface.ts
 └── rules/
     ├── config/
@@ -144,7 +149,7 @@ Batmanuel can also be used as a local CLI tool to analyze the current project wi
 Inside the Batmanuel repository, you can run:
 
 ```bash
-npx ts-node bin/cli.ts analyze .
+npx ts-node src/bin/cli.ts analyze .
 ```
 
 This command:
@@ -205,80 +210,16 @@ Generates an access token for a given project. This token must be used to authen
 ```json
 {
   "projectId": "my-project-backend",
-  "token": "<GENERATED_TOKEN>",
+  "token": "MOCK-TOKEN-1234567890",
   "expiresIn": "30d"
 }
 ```
 
 ---
 
-### POST /analyze
-
-Receives project, branch, commit, and source path information, runs the configured analysis engines, and returns a consolidated report. Requires authentication.
-
-**Request body:**
-
-```json
-{
-  "projectId": "my-project-backend",
-  "branch": "main",
-  "commit": "abc123",
-  "sourcePath": "./src"
-}
-```
-
-**Response:**
-
-```json
-{
-  "projectId": "my-project-backend",
-  "branch": "main",
-  "commit": "abc123",
-  "timestamp": "2026-07-15T15:00:00.000Z",
-  "score": 82,
-  "passed": true,
-  "threshold": 70,
-  "metrics": {
-    "securityCritical": 0,
-    "securityHigh": 0,
-    "securityMedium": 1,
-    "qualitySmells": 0,
-    "duplications": 2,
-    "outdatedDeps": 0
-  },
-  "issues": [
-    {
-      "engine": "duplication-service",
-      "type": "quality",
-      "severity": "medium",
-      "ruleId": "duplicate-code",
-      "message": "Duplicated block found between src/a.ts:10 and src/b.ts:18",
-      "file": "src/b.ts",
-      "line": 18
-    }
-  ]
-}
-```
-
-| Field                      | Type    | Description                                       |
-| -------------------------- | ------- | ------------------------------------------------- |
-| `score`                    | number  | Overall quality score from 0 to 100.              |
-| `passed`                   | boolean | Whether the score meets the configured threshold. |
-| `threshold`                | number  | Minimum required score to pass the quality gate.  |
-| `metrics.securityCritical` | number  | Number of critical security issues.               |
-| `metrics.securityHigh`     | number  | Number of high severity security issues.          |
-| `metrics.securityMedium`   | number  | Number of medium severity security issues.        |
-| `metrics.qualitySmells`    | number  | Number of quality smell issues.                   |
-| `metrics.duplications`     | number  | Number of duplicated code blocks found.           |
-| `metrics.outdatedDeps`     | number  | Number of outdated or vulnerable dependencies.    |
-| `issues[].type`            | string  | `security`, `quality`, or `dependency`.           |
-| `issues[].severity`        | string  | `critical`, `high`, `medium`, `low`, or `info`.   |
-
----
-
 ### POST /analyze/upload
 
-Uploads a zipped repository with `multipart/form-data`, extracts it in a temporary directory, resolves the source directory, and runs the same analysis pipeline used by `POST /analyze`. This endpoint is designed for CI environments where the API cannot access the repository path directly on the runner.
+Uploads a zipped repository with `multipart/form-data`, extracts it in a temporary directory, resolves the source directory, and runs the analysis pipeline. This endpoint is designed for CI environments where the API cannot access the repository path directly on the runner.
 
 **Form fields:**
 
@@ -317,23 +258,38 @@ curl -X POST http://localhost:3000/analyze/upload \
     "duplications": 0,
     "outdatedDeps": 0
   },
+  "totalFilesAnalyzed": 42,
   "issues": []
 }
 ```
 
+| Field                      | Type    | Description                                       |
+| -------------------------- | ------- | ------------------------------------------------- |
+| `score`                    | number  | Overall quality score from 0 to 100.              |
+| `passed`                   | boolean | Whether the score meets the configured threshold. |
+| `threshold`                | number  | Minimum required score to pass the quality gate.  |
+| `metrics.securityCritical` | number  | Number of critical security issues.               |
+| `metrics.securityHigh`     | number  | Number of high severity security issues.          |
+| `metrics.securityMedium`   | number  | Number of medium severity security issues.        |
+| `metrics.qualitySmells`    | number  | Number of quality smell issues.                   |
+| `metrics.duplications`     | number  | Number of duplicated code blocks found.           |
+| `metrics.outdatedDeps`     | number  | Number of outdated or vulnerable dependencies.    |
+| `issues[].type`            | string  | `security`, `quality`, or `dependency`.           |
+| `issues[].severity`        | string  | `critical`, `high`, `medium`, `low`, or `info`.   |
+
 ---
 
-### GET /analyze/:projectId/summary
+### GET /projects/:id/summary
 
-Returns a summary for a given project. Requires authentication.
+Returns a basic project summary payload. The current implementation uses a placeholder response and does not yet persist historical analysis data.
 
 **Response:**
 
 ```json
 {
   "projectId": "my-project-backend",
-  "lastScore": 82,
-  "trend": [76, 78, 80, 82],
+  "lastScore": 0,
+  "trend": [],
   "lastAnalysisAt": "2026-07-15T15:00:00.000Z"
 }
 ```
