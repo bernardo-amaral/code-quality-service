@@ -4,6 +4,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { Issue } from '../analyze/interfaces/issue.interface';
+import { IGNORED_DIRS } from './ignored-dirs-constants';
 
 @Injectable()
 export class SecurityService {
@@ -30,7 +31,7 @@ export class SecurityService {
       const fullPath = path.join(root, entry.name);
 
       if (entry.isDirectory()) {
-        if (['node_modules', '.git', 'dist', 'coverage'].includes(entry.name)) {
+        if (IGNORED_DIRS.includes(entry.name)) {
           continue;
         }
 
@@ -52,6 +53,7 @@ export class SecurityService {
     const secretPatterns: { regex: RegExp; ruleId: string; message: string }[] =
       [
         {
+          // eslint-disable-next-line no-useless-escape
           regex: /(api[_-]?key)\s*[:=]\s*['"][0-9a-zA-Z_\-]{16,}['"]/i,
           ruleId: 'hardcoded-api-key',
           message: 'Possible hardcoded API key detected',

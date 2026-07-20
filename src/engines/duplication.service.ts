@@ -5,6 +5,7 @@ import {
   DuplicationBlock,
   DuplicationResult,
 } from './interfaces/duplication-result.interface';
+import { IGNORED_DIRS } from './ignored-dirs-constants';
 
 interface NormalizedFile {
   filePath: string;
@@ -18,7 +19,6 @@ interface BlockOccurrence {
 
 const MIN_BLOCK_SIZE = 10;
 const DEFAULT_EXTENSIONS = ['.ts', '.js'];
-const DEFAULT_IGNORE_PATTERNS = ['node_modules', 'dist', '.git', 'coverage'];
 
 @Injectable()
 export class DuplicationService {
@@ -27,9 +27,8 @@ export class DuplicationService {
   async analyzeDirectory(
     rootDir: string,
     extensions: string[] = DEFAULT_EXTENSIONS,
-    ignorePatterns: string[] = DEFAULT_IGNORE_PATTERNS,
   ): Promise<DuplicationResult> {
-    const filePaths = this.collectFiles(rootDir, extensions, ignorePatterns);
+    const filePaths = this.collectFiles(rootDir, extensions, IGNORED_DIRS);
     const files = filePaths.map((filePath) => this.readAndNormalize(filePath));
 
     return Promise.resolve(this.detectDuplicates(files));
