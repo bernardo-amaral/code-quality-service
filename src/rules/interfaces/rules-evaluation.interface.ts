@@ -8,4 +8,5 @@ export interface RulesEvaluation {
     issuesBySeverity: Record<string, number>;
     issuesByType: Record<string, number>;
   };
+  qualitySmellsCount: number;
 }

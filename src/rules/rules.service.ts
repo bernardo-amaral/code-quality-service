@@ -32,6 +32,8 @@ export class RulesService {
     const rawScore = this.config.baseScore - duplicationPenalty - issuesPenalty;
     const score = Math.max(0, Math.min(100, Math.round(rawScore)));
 
+    const qualitySmellsCount = byType.quality ?? 0;
+
     return {
       score,
       passed: score >= this.config.passThreshold,
@@ -42,6 +44,7 @@ export class RulesService {
         issuesBySeverity: bySeverity,
         issuesByType: byType,
       },
+      qualitySmellsCount,
     };
   }
 

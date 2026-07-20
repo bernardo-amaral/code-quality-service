@@ -15,12 +15,14 @@ import { tmpdir } from 'os';
 import path from 'path';
 import AdmZip from 'adm-zip';
 import { DependencyScannerService } from '../engines/dependency-scanner.service';
+import { SecurityService } from '../engines/security.service';
 
 @Injectable()
 export class AnalyzeService {
   constructor(
     private readonly duplicationService: DuplicationService,
     private readonly dependencyScannerService: DependencyScannerService,
+    private readonly securityService: SecurityService,
     private readonly rulesService: RulesService,
   ) {}
 
@@ -98,6 +100,10 @@ export class AnalyzeService {
       params.sourcePath,
     );
 
+    const securityIssues = await this.securityService.analyze(
+      params.sourcePath,
+    );
+
     const duplicationIssues: Issue[] = duplicationResult.duplicates.map(
       (block) => ({
         engine: 'duplication-service',
@@ -113,7 +119,11 @@ export class AnalyzeService {
     const dependencyIssues: Issue[] =
       await this.dependencyScannerService.scanPackageJson(params.sourcePath);
 
-    const issues: Issue[] = [...duplicationIssues, ...dependencyIssues];
+    const issues: Issue[] = [
+      ...duplicationIssues,
+      ...securityIssues,
+      ...dependencyIssues,
+    ];
 
     const evaluation = this.rulesService.evaluate(
       duplicationResult.duplicationPercentage,
@@ -132,7 +142,7 @@ export class AnalyzeService {
         securityCritical: evaluation.breakdown.issuesBySeverity.critical ?? 0,
         securityHigh: evaluation.breakdown.issuesBySeverity.high ?? 0,
         securityMedium: evaluation.breakdown.issuesBySeverity.medium ?? 0,
-        qualitySmells: 0,
+        qualitySmells: evaluation?.qualitySmellsCount ?? 0,
         duplications: duplicationResult.duplicates.length,
         outdatedDeps: dependencyIssues.length,
       },
